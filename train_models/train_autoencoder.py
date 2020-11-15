@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 import matplotlib
-matplotlib.use('TKAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -12,15 +13,26 @@ from sklearn import decomposition, ensemble
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
-from keras.preprocessing import text, sequence
-from keras import layers, models, optimizers, Input
-from keras.utils import np_utils
-import keras.backend as K
-from keras.models import Sequential
-from keras import layers, Model, Input
-from keras.layers import Conv2D, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
+import tensorflow as tf
+
+from tensorflow.keras.preprocessing import text, sequence
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models, optimizers, Input
+import tensorflow.keras.backend as K
+from tensorflow.keras.models import Sequential
+from tensorflow.keras import layers, Model, Input
+from tensorflow.keras.layers import Conv2D, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D, Reshape
+from tensorflow.keras.optimizers import Adam
+from tensorflow import keras
+
+from tensorflow.keras.callbacks import ModelCheckpoint
+
+target_size = (64, 64)
+
+def random_crop(image):
+    cropped_image = tf.image.random_crop(image, size=[target_size[0], target_size[1], 3])
+    cropped_image = tf.image.resize(cropped_image, (image.shape[0], image.shape[1]))
+    return cropped_image
 
 def plot_history(history):
     acc = history.history['accuracy']
@@ -41,97 +53,27 @@ def plot_history(history):
     plt.title('Training and validation loss')
     plt.legend()
 
-class Sampling(layers.Layer):
-    """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
-
-    def call(self, inputs):
-        z_mean, z_log_var = inputs
-        batch = tf.shape(z_mean)[0]
-        dim = tf.shape(z_mean)[1]
-        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
-        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
-
-class VAE(keras.Model):
-    def __init__(self, encoder, decoder, **kwargs):
-        super(VAE, self).__init__(**kwargs)
-        self.encoder = encoder
-        self.decoder = decoder
-
-    def train_step(self, data):
-        if isinstance(data, tuple):
-            data = data[0]
-        with tf.GradientTape() as tape:
-            z_mean, z_log_var, z = encoder(data)
-            reconstruction = decoder(z)
-            reconstruction_loss = tf.reduce_mean(
-                keras.losses.binary_crossentropy(data, reconstruction)
-            )
-            reconstruction_loss *= 28 * 28
-            kl_loss = 1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var)
-            kl_loss = tf.reduce_mean(kl_loss)
-            kl_loss *= -0.5
-            total_loss = reconstruction_loss + kl_loss
-        grads = tape.gradient(total_loss, self.trainable_weights)
-        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
-        return {
-            "loss": total_loss,
-            "reconstruction_loss": reconstruction_loss,
-            "kl_loss": kl_loss,
-        }
-
-def plot_latent(encoder, decoder):
-    # display a n*n 2D manifold of digits
-    n = 30
-    digit_size = 28
-    scale = 2.0
-    figsize = 15
-    figure = np.zeros((digit_size * n, digit_size * n))
-    # linearly spaced coordinates corresponding to the 2D plot
-    # of digit classes in the latent space
-    grid_x = np.linspace(-scale, scale, n)
-    grid_y = np.linspace(-scale, scale, n)[::-1]
-
-    for i, yi in enumerate(grid_y):
-        for j, xi in enumerate(grid_x):
-            z_sample = np.array([[xi, yi]])
-            x_decoded = decoder.predict(z_sample)
-            digit = x_decoded[0].reshape(digit_size, digit_size)
-            figure[
-                i * digit_size : (i + 1) * digit_size,
-                j * digit_size : (j + 1) * digit_size,
-            ] = digit
-
-    plt.figure(figsize=(figsize, figsize))
-    start_range = digit_size // 2
-    end_range = n * digit_size + start_range + 1
-    pixel_range = np.arange(start_range, end_range, digit_size)
-    sample_range_x = np.round(grid_x, 1)
-    sample_range_y = np.round(grid_y, 1)
-    plt.xticks(pixel_range, sample_range_x)
-    plt.yticks(pixel_range, sample_range_y)
-    plt.xlabel("z[0]")
-    plt.ylabel("z[1]")
-    plt.imshow(figure, cmap="Greys_r")
-    plt.show()
-
 if __name__ == '__main__':
-    train_dir = 'data/train'
-    val_dir = 'data/val'
-    test_dir = 'data/test'
+    base_dir = '/deac/classes/csc391/langrc18/art-style-conversion/'
 
+    train_dir = base_dir + 'data/train'
+    validation_dir = base_dir + 'data/val'
+    test_dir = base_dir + 'data/test'
+
+    print('Data Generator')
     train_datagen = ImageDataGenerator(
-      rescale=1./255,
-      rotation_range=40,
-      width_shift_range=0.2,
-      height_shift_range=0.2,
-      zoom_range=0.2,
-      horizontal_flip=True,
-      fill_mode='nearest')
-
-    target_size = (256, 256)
+        rescale=1./255,
+        rotation_range=20,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        vertical_flip=True,
+        fill_mode='nearest',
+        preprocessing_function=random_crop)
 
     # Note that the validation data should not be augmented!
-    test_datagen = ImageDataGenerator(rescale=1./255)
+    test_datagen = ImageDataGenerator(rescale=1./255, preprocessing_function=random_crop)
 
     print('Train Generator')
     train_generator = train_datagen.flow_from_directory(
@@ -140,7 +82,7 @@ if __name__ == '__main__':
             color_mode='rgb',
             batch_size=20,
             shuffle=True,
-            class_mode=None)
+            class_mode='input')
 
     print('Validation Generator')
     validation_generator = test_datagen.flow_from_directory(
@@ -149,7 +91,7 @@ if __name__ == '__main__':
             color_mode='rgb',
             batch_size=20,
             shuffle=True,
-            class_mode=None)
+            class_mode='input')
 
     print('Test Generator')
     test_generator = test_datagen.flow_from_directory(
@@ -158,10 +100,11 @@ if __name__ == '__main__':
             color_mode='rgb',
             batch_size=20,
             shuffle=True,
-            class_mode=None)
-    
-    input_img = Input(shape=(32,32,3))
+            class_mode='input')
+
+    input_img = Input(shape=(target_size[0],target_size[1],3))
     latent_dim = 64
+    encoding_dim = 4 * 4 * 256
 
     # Encoder
     x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(input_img)
@@ -172,7 +115,86 @@ if __name__ == '__main__':
     x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
     x = MaxPooling2D((2,2))(x)
 
-    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)(
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = MaxPooling2D((2,2))(x)
+
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = MaxPooling2D((2,2))(x)
+
+    x = Flatten()(x)
+
+    encoded = layers.Dense(encoding_dim, activation="relu")(x)
+
+    x = Reshape((4, 4, 256))(encoded)
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = UpSampling2D((2,2))(x)
+
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = UpSampling2D((2,2))(x)
+
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = UpSampling2D((2,2))(x)
+
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = UpSampling2D((2,2))(x)
+    decoded = Conv2D(3, kernel_size=(3,3), activation='relu', padding='same')(x)
+
+    autoencoder = Model(input_img, decoded)
+    autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
+    autoencoder.summary()
+
+    curr = 'autoencoder'
+
+    filepath = base_dir + 'models/' + curr + '/' + curr + '-{epoch:02d}.h5'
+    checkpoint = ModelCheckpoint(filepath, 
+                                save_weights_only=False,
+                                monitor='val_loss',
+                                mode='min',
+                                save_best_only=True,
+                                verbose=1)
+
+    logdir = base_dir + "logs/scalars/autoencoder-" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+
+    callbacks_list = [checkpoint, tensorboard_callback]
+
+    history = autoencoder.fit(train_generator,
+                        steps_per_epoch=349,
+                        epochs=70,
+                        validation_data=validation_generator,
+                        validation_steps=58,
+                        callbacks=callbacks_list)
+
+    autoencoder.save(base_dir + 'models/' + curr + '/' + curr + '-final.h5')
+
+    encoder = Model(input_img, encoded, name='encoder')
+    encoder.save(base_dir + 'models/' + curr + '/encoder.h5')
+
+    decoder_input = Input(shape=encoded.output_shape[1:])
+    decoder = Model(decoder_input, decoded, name='decoder')
+    decoder.save(base_dir + 'models/' + curr + '/decoder.h5')
+
+    plot_history(history)
+    plt.savefig('autoencoder_loss.png')
+
+    exit(0)
+
+    # Encoder
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(input_img)
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = MaxPooling2D((2,2))(x)
+
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = Conv2D(128, kernel_size=(3,3), activation='relu', padding='same')(x)
+    x = MaxPooling2D((2,2))(x)
+
+    x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
     x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
     x = MaxPooling2D((2,2))(x)
     x = Flatten()(x)
@@ -209,7 +231,7 @@ if __name__ == '__main__':
 
     curr = 'autoencoder'
 
-    filepath='models/' + curr + '/' + curr + '-{epoch:02d}.h5'
+    filepath = base_dir + 'models/' + curr + '/' + curr + '-{epoch:02d}.h5'
     checkpoint = ModelCheckpoint(filepath, 
                                 save_weights_only=False,
                                 monitor='val_accuracy',
@@ -217,8 +239,8 @@ if __name__ == '__main__':
                                 save_best_only=True,
                                 verbose=1)
 
-    logdir = "logs/scalars/autoencoder-" + datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+    logdir = base_dir + "logs/scalars/autoencoder-" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
     callbacks_list = [checkpoint, tensorboard_callback]
 
@@ -229,10 +251,10 @@ if __name__ == '__main__':
                         validation_steps=87,
                         callbacks=callbacks_list)
 
-    vae.save('models/' + curr + '/' + curr + '-final.h5')
+    vae.save(base_dir + 'models/' + curr + '/' + curr + '-final.h5')
 
     encoder = Model(input_img, encoded, name='encoder')
-    encoder.save('models/' + curr + '/encoder.h5')
+    encoder.save(base_dir + 'models/' + curr + '/encoder.h5')
 
     decoder = Model(latent_inputs, decoded, name='decoder')
-    decoder.save('models/' + curr + '/decoder.h5')
+    decoder.save(base_dir + 'models/' + curr + '/decoder.h5')
