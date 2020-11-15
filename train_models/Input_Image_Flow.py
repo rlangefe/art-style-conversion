@@ -2,11 +2,18 @@ import argparse
 from keras.preprocessing.image import ImageDataGenerator
 def Input_Image_Flow(batchsize,targetsize):
     # create generator
-    datagen = ImageDataGenerator()
+    datagen = ImageDataGenerator(rescale=1./255, preprocessing_function=random_crop)
     # prepare an iterators for each dataset
-    input_img = datagen.flow_from_directory(train_dir, class_mode='binary',batch_size=batchsize,target_size=targetsize)
+    input_img = datagen.flow_from_directory(train_dir, class_mode='None',batch_size=batchsize,target_size=targetsize)
     batchX, batchy = input_img.next()
     print('Batch shape=%s, min=%.3f, max=%.3f' % (batchX.shape, batchX.min(), batchX.max()))
+    return input_img
+
+
+def random_crop(image):
+    cropped_image = tf.image.random_crop(image, size=[target_size[0], target_size[1], 3])
+    cropped_image = tf.image.resize(cropped_image, (image.shape[0], image.shape[1]))
+    return cropped_image
 
 
 if __name__ == '__main__':
