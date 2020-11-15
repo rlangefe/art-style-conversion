@@ -1,6 +1,7 @@
 import argparse
-from keras.preprocessing.image import ImageDataGenerator
-def Input_Image_Flow(batchsize,targetsize):
+from tf.keras.preprocessing.image import ImageDataGenerator
+import tensorflow as tf
+def Input_Image_Flow(batchsize,targetsize,train_dir):
     # create generator
     datagen = ImageDataGenerator(rescale=1./255, preprocessing_function=random_crop)
     # prepare an iterators for each dataset
@@ -17,18 +18,16 @@ def random_crop(image):
 
 
 if __name__ == '__main__':
-    base_dir = '/deac/classes/csc391/langrc18/art-style-conversion/'
-
+    
     parse = argparse.ArgumentParser()
-    parse.add_argument("-d","--directory",dest="target",help="base directory",default='/deac/classes/csc391/langrc18/art-style-conversion/')
+    parse.add_argument("-d","--directory",dest="base",help="base directory",default='/deac/classes/csc391/langrc18/art-style-conversion/')
     parse.add_argument("-bs","--batch_size",dest="batch_size",help="batch size for input images",default=32)
     parse.add_argument("-ts","--target_size",dest="target_size",help="target size for input images",default=(64,64))
-    
-    train_dir = base_dir + 'data/train'
-    validation_dir = base_dir + 'data/val'
-    test_dir = base_dir + 'data/test'
 
     args = parse.parse_args()
     batch_size = args.batch_size
     target_size = args.target_size
-    Input_Image_Flow(batch_size,target_size)
+    base_dir = args.base
+    train_dir = base_dir + 'data/train'
+    
+    Input_Image_Flow(batch_size,target_size,train_dir)
