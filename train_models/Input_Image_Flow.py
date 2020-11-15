@@ -23,4 +23,4 @@ if __name__ == '__main__':
     args = parse.parse_args()
     batch_size = args.batch_size
     target_size = args.target_size
-    Input_Image_Flow(batchsize,targetsize)
+    Input_Image_Flow(batch_size,target_size)
