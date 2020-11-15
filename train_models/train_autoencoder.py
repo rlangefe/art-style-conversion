@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     x = Flatten()(x)
 
-    encoded = layers.Dense(encoding_dim, activation="relu")(x)
+    encoded = layers.Dense(encoding_dim, activation="sigmoid")(x)
 
     x = Reshape((4, 4, 256))(encoded)
     x = Conv2D(256, kernel_size=(3,3), activation='relu', padding='same')(x)
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     encoder = Model(input_img, encoded, name='encoder')
     encoder.save(base_dir + 'models/' + curr + '/encoder.h5')
 
-    decoder_input = Input(shape=encoded.output_shape[1:])
+    decoder_input = Input(shape=encoder.output_shape[1:])
     decoder = Model(decoder_input, decoded, name='decoder')
     decoder.save(base_dir + 'models/' + curr + '/decoder.h5')
 
