@@ -164,7 +164,7 @@ if __name__ == '__main__':
     callbacks_list = [checkpoint, tensorboard_callback]
 
     history = autoencoder.fit(train_generator,
-                        steps_per_epoch=5,
+                        steps_per_epoch=349,
                         epochs=15,
                         validation_data=validation_generator,
                         validation_steps=58,
