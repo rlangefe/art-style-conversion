@@ -52,7 +52,7 @@ class Autoencoder(Model):
     super(Autoencoder, self).__init__()
     self.latent_dim = latent_dim   
     self.encoder = tf.keras.Sequential([
-        tf.keras.layers.GaussianNoise(stddev=0.01),
+        tf.keras.layers.GaussianNoise(stddev=0.01, input_shape=(target_size[0], target_size[1], 3)),
         Conv2D(32, kernel_size=(3,3), activation='relu', padding='same'),
         Conv2D(32, kernel_size=(3,3), activation='relu', padding='same'),
         MaxPooling2D((2,2)),
@@ -69,7 +69,7 @@ class Autoencoder(Model):
         layers.Dense(encoding_dim, activation="sigmoid")
     ])
     self.decoder = tf.keras.Sequential([
-        layers.Dense(encoding_dim, activation="relu"),
+        layers.Dense(encoding_dim, activation="relu", input_shape = (encoding_dim,)),
         Reshape((4, 4, 8)),
         Conv2D(8, kernel_size=(3,3), activation='relu', padding='same'),
         Conv2D(8, kernel_size=(3,3), activation='relu', padding='same'),
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     callbacks_list = [checkpoint, tensorboard_callback]
 
     history = autoencoder.fit(train_generator,
-                        steps_per_epoch=349,
+                        steps_per_epoch=5,
                         epochs=15,
                         validation_data=validation_generator,
                         validation_steps=58,

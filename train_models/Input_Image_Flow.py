@@ -17,9 +17,7 @@ def Input_Image_Flow(batchsize,targetsize,train_dir):
     # create generator
     datagen = ImageDataGenerator(rescale=1./255, preprocessing_function=random_crop)
     # prepare an iterators for each dataset
-    if not os.path.exists('temp'):
-        os.makedirs('temp')
-    input_img = datagen.flow_from_directory(train_dir,save_prefix = 'img', class_mode=None,batch_size=batchsize,target_size=targetsize, save_format='png',save_to_dir='temp')
+    input_img = datagen.flow_from_directory(train_dir, class_mode=None,batch_size=batchsize,target_size=targetsize)
     #batchX, batchy = input_img.next()
    #print('Batch shape=%s, min=%.3f, max=%.3f' % (batchX.shape, batchX.min(), batchX.max()))
     return input_img
@@ -30,10 +28,7 @@ def random_crop(image):
     cropped_image = tf.image.resize(cropped_image, (image.shape[0], image.shape[1]))
     return cropped_image
 
-
-
-
-def print_model_results(orig_images_dir, model_outputs):
+def print_model_results(orig_images, model_outputs):
     i = 0 
 
     images_per_row = 6
@@ -44,9 +39,9 @@ def print_model_results(orig_images_dir, model_outputs):
     row = 0
     for i in range(model_outputs.shape[0]):
         #get image from temp directory
-        display_grid[col*size : col*size, row * size : row*size] = get_image(i).astype('unit8')
+        display_grid[col*size : col*size, row * size : row*size] = orig_images[i].astype('float32')
         col = col+1
-        display_grid[col*size : col*size, row * size : row*size] = model_outputs[i].astype('unit8') 
+        display_grid[col*size : col*size, row * size : row*size] = model_outputs[i].astype('float32') 
 
     scale = 1./size
     plt.figure(figsize=(scale*display_grid.shape[1],scale*display_grid.shape[0]))
@@ -55,7 +50,7 @@ def print_model_results(orig_images_dir, model_outputs):
        
 
 def get_image(index):
-	name = 'img_' + str(index) + '_\d+?.png'
+	name = 'img_' + str(index) + '.png'
 	
 	x = find_in_list(name, os.listdir('temp'))
 	
@@ -65,6 +60,18 @@ def get_image(index):
 		return None
 		
 	return np.asarray(Image.open('temp/' + file_name))
+
+class Autoencoder(tf.keras.Model):
+    def __init__(self, enc, dec, latent_dim):
+            super(Autoencoder, self).__init__()
+            self.latent_dim = None   
+            self.encoder = enc
+            self.decoder = dec
+
+    def call(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
 	
 def find_in_list(name, list_of_names):
 	for i in list_of_names:
@@ -76,26 +83,26 @@ def find_in_list(name, list_of_names):
 
 
 if __name__ == '__main__':
-    
-#   parse = argparse.ArgumentParser()
-#   parse.add_argument("-d","--directory",dest="base",help="base directory",default='/deac/classes/csc391/langrc18/art-style-conversion/')
-#   parse.add_argument("-bs","--batch_size",dest="batch_size",help="batch size for input images",default=32)
-#   parse.add_argument("-ts","--target_size",dest="target_size",help="target size for input images",default=(64,64))
+    parse = argparse.ArgumentParser()
+    parse.add_argument("-d","--directory",dest="base",help="base directory",default='/deac/classes/csc391/langrc18/art-style-conversion/')
+    parse.add_argument("-m","--model",dest="model",help="model weight file path",default='/deac/classes/csc391/langrc18/art-style-conversion/models/autoencoder')
+    parse.add_argument("-bs","--batch_size",dest="batch_size",help="batch size for input images",default=32)
+    parse.add_argument("-ts","--target_size",dest="target_size",help="target size for input images",default=(64,64))
+    parse.add_argument("-t","--test",dest="useSampleModel",help="fake model for testing?", default=True)
 
-#   args = parse.parse_args()
-#   batch_size = args.batch_size
-#   target_size = args.target_size
-#   base_dir = args.base
-#   train_dir = base_dir + 'data/train'
-#   test_dir = base_dir + 'data/test'
-    original_dataset_dir = '/Users/audreygroves/Desktop/Pollack'
-    base_dir = '/Users/audreygroves/Desktop/Pollack'
+    args = parse.parse_args()
+    batch_size = args.batch_size
+    target_size = args.target_size
+    base_dir = args.base
+    #test_dir = base_dir + 'data/test'
+    #original_dataset_dir = '/Users/audreygroves/Desktop/Pollack'
+    #base_dir = '/Users/audreygroves/Desktop/Pollack'
 
-    train_dir = os.path.join(base_dir, 'train')
+    train_dir = os.path.join(base_dir, 'data/train')
     #os.mkdir(train_dir)
-    validation_dir = os.path.join(base_dir, 'validation')
+    validation_dir = os.path.join(base_dir, 'data/validation')
     #os.mkdir(validation_dir)
-    test_dir = os.path.join(original_dataset_dir, 'test')
+    test_dir = os.path.join(base_dir, 'data/test')
     #os.mkdir(test_dir)
     batch_size = 9
     target_size = (64,64)
@@ -105,21 +112,30 @@ if __name__ == '__main__':
 
         
 
-    useSampleModel = True 
-    if useSampleModel:
-        pass
+    useSampleModel = args.useSampleModel 
+    
+    if useSampleModel == True:
+        print('Simulating Model')
+        model_outputs = test_datagen.next()
+        orig_images = model_outputs
     else:
-        print('Hello')
-            #add pretrained model
-    #test models
-    model_outputs = test_datagen.next()
+        print('Loading Model')
+        model = Autoencoder(tf.keras.models.load_model(args.model + '/' + 'encoder.h5'),
+                            tf.keras.models.load_model(args.model + '/' + 'decoder.h5'),
+                            4 * 4 * 8)
+        
+        print('Generating Reconstructed Images')
+        orig_images = test_datagen.next()
+        print(orig_images.shape)
+        model_outputs = model.predict(orig_images)
+        print(model_outputs.shape)
+    
        
     #print 
-    print_model_results('temp', model_outputs)
+    print_model_results(orig_images, model_outputs)
                 
-    if os.path.exists('temp'):
-        shutil.rmtree('temp')
-    plt.show()
+    #plt.show()
+    plt.savefig('display_results.png')
         
 
 
