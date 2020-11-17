@@ -17,13 +17,14 @@ import tensorflow as tf
 
 from tensorflow.keras.preprocessing import text, sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras import layers, models, optimizers, Input
+from tensorflow.keras import layers, models, optimizers, Input, losses
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers, Model, Input
 from tensorflow.keras.layers import Conv2D, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D, Reshape
 from tensorflow.keras.optimizers import Adam
 from tensorflow import keras
+from tensorflow.keras.regularizers import l1
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 
@@ -44,46 +45,94 @@ def plot_history(history):
     plt.plot(x, val_loss, 'r', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
+'''
+class Autoencoder(Model):
+  def __init__(self, latent_dim):
+    super(Autoencoder, self).__init__()
+    self.latent_dim = latent_dim   
+    self.encoder = tf.keras.Sequential([
+        tf.keras.layers.GaussianNoise(stddev=0.01),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        MaxPooling2D((2,2)),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        MaxPooling2D((2,2)),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        MaxPooling2D((2,2)),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        MaxPooling2D((2,2)),
+        Conv2D(512, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(512, kernel_size=(3,3), activation='relu', padding='same'),
+        MaxPooling2D((2,2)),
+        Flatten(),
+        layers.Dense(encoding_dim, activation="sigmoid")
+    ])
+    self.decoder = tf.keras.Sequential([
+        Reshape((2, 2, 512)),
+        Conv2D(512, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(512, kernel_size=(3,3), activation='relu', padding='same'),
+        UpSampling2D((2,2)),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        UpSampling2D((2,2)),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        UpSampling2D((2,2)),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        UpSampling2D((2,2)),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        UpSampling2D((2,2)),
+        Conv2D(3, kernel_size=(3,3), activation='sigmoid', padding='same')
+    ])
+
+  def call(self, x):
+    encoded = self.encoder(x)
+    decoded = self.decoder(encoded)
+    return decoded
+'''
+
+reg_const = 0.000001
 
 class Autoencoder(Model):
   def __init__(self, latent_dim):
     super(Autoencoder, self).__init__()
     self.latent_dim = latent_dim   
     self.encoder = tf.keras.Sequential([
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        tf.keras.layers.GaussianNoise(stddev=0.01),
+        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         MaxPooling2D((2,2)),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         MaxPooling2D((2,2)),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         MaxPooling2D((2,2)),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        MaxPooling2D((2,2)),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         MaxPooling2D((2,2)),
         Flatten(),
         layers.Dense(encoding_dim, activation="sigmoid")
     ])
     self.decoder = tf.keras.Sequential([
-        Reshape((2, 2, 256)),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        layers.Dense(encoding_dim, activation="relu"),
+        Reshape((4, 4, 8)),
+        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         UpSampling2D((2,2)),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         UpSampling2D((2,2)),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(256, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         UpSampling2D((2,2)),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
-        UpSampling2D((2,2)),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(128, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
+        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same', activity_regularizer=l1(reg_const)),
         UpSampling2D((2,2)),
         Conv2D(3, kernel_size=(3,3), activation='sigmoid', padding='same')
     ])
@@ -144,12 +193,13 @@ if __name__ == '__main__':
 
     input_img = Input(shape=(target_size[0],target_size[1],3))
     latent_dim = 64
-    encoding_dim = 2 * 2 * 256
+    #encoding_dim = 2 * 2 * 512
+    encoding_dim = 4 * 4 * 8
 
     autoencoder = Autoencoder(encoding_dim)
-    autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
+    autoencoder.compile(optimizer=Adam(learning_rate=0.0001), loss=losses.MeanSquaredError())
 
-    curr = 'autoencoder'
+    curr = 'autoencoder-reg'
 
     filepath = base_dir + 'models/' + curr + '/' + curr + '-{epoch:02d}.h5'
     checkpoint = ModelCheckpoint(filepath, 
@@ -159,14 +209,14 @@ if __name__ == '__main__':
                                 save_best_only=True,
                                 verbose=1)
 
-    logdir = base_dir + "logs/scalars/autoencoder-" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    logdir = base_dir + "logs/scalars/autoencoder-reg-" + datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
     callbacks_list = [checkpoint, tensorboard_callback]
 
     history = autoencoder.fit(train_generator,
                         steps_per_epoch=349,
-                        epochs=100,
+                        epochs=15,
                         validation_data=validation_generator,
                         validation_steps=58,
                         callbacks=callbacks_list)
@@ -236,7 +286,7 @@ if __name__ == '__main__':
     autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
     autoencoder.summary()
 
-    curr = 'autoencoder'
+    curr = 'autoencoder-reg'
 
     filepath = base_dir + 'models/' + curr + '/' + curr + '-{epoch:02d}.h5'
     checkpoint = ModelCheckpoint(filepath, 
@@ -246,7 +296,7 @@ if __name__ == '__main__':
                                 save_best_only=True,
                                 verbose=1)
 
-    logdir = base_dir + "logs/scalars/autoencoder-" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    logdir = base_dir + "logs/scalars/autoencoder-reg-" + datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
     callbacks_list = [checkpoint, tensorboard_callback]
@@ -268,4 +318,4 @@ if __name__ == '__main__':
     decoder.save(base_dir + 'models/' + curr + '/decoder.h5')
 
     plot_history(history)
-    plt.savefig('autoencoder_loss.png')
+    plt.savefig('graph_autoencoder_loss.png')
