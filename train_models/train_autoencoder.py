@@ -29,6 +29,7 @@ from tensorflow.keras.regularizers import l1
 from tensorflow.keras.callbacks import ModelCheckpoint
 
 target_size = (64, 64)
+import argparse
 
 def random_crop(image):
     cropped_image = tf.image.random_crop(image, size=[target_size[0], target_size[1], 3])
