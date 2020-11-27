@@ -22,6 +22,8 @@ if __name__ == '__main__':
     target_dir = args.output
     crops = args.crops
 
+    artist_list = []
+
     image_num = 1
 
     if not os.path.exists(target_dir):
@@ -34,31 +36,32 @@ if __name__ == '__main__':
             os.makedirs(curr_split)
 
         for category in os.listdir(os.path.join(base_dir, split)):
-            curr_category = os.path.join(curr_split, category)
+            if category in artist_list:
+                curr_category = os.path.join(curr_split, category)
 
-            if not os.path.exists(curr_category):
-                os.makedirs(curr_category)
-            
-            for image_name in os.listdir(os.path.join(base_dir, split, category)):
-                curr_image = os.path.join(base_dir, split, category, image_name)
+                if not os.path.exists(curr_category):
+                    os.makedirs(curr_category)
+                
+                for image_name in os.listdir(os.path.join(base_dir, split, category)):
+                    curr_image = os.path.join(base_dir, split, category, image_name)
 
-                if curr_image[-4:] == '.jpg':
-                    if image_num >= args.restart:
-                        image = np.array(Image.open(curr_image).convert('RGB'))
+                    if curr_image[-4:] == '.jpg':
+                        if image_num >= args.restart:
+                            image = np.array(Image.open(curr_image).convert('RGB'))
 
-                        print('Image ' + str(image_num) + ': ' + curr_image)
+                            print('Image ' + str(image_num) + ': ' + curr_image)
 
-                        image_num+=1
+                            image_num+=1
 
-                        for i in range(crops):
+                            for i in range(crops):
 
-                            curr_name = image_name[:-4] + '_' + f'{i:03}' + '.png'
-                            
-                            cropped_image = np.array(tf.image.random_crop(image, size=[target_size[0], target_size[1], 3]))
+                                curr_name = image_name[:-4] + '_' + f'{i:03}' + '.png'
+                                
+                                cropped_image = np.array(tf.image.random_crop(image, size=[target_size[0], target_size[1], 3]))
 
-                            cropped_image = Image.fromarray(cropped_image)
-                            
-                            cropped_image.save(os.path.join(curr_category, curr_name))
+                                cropped_image = Image.fromarray(cropped_image)
+                                
+                                cropped_image.save(os.path.join(curr_category, curr_name))
 
-                    else:
-                        image_num+=1
+                        else:
+                            image_num+=1
