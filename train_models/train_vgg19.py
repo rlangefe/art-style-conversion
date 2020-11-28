@@ -98,6 +98,8 @@ if __name__ == '__main__':
 
     base_model = VGG19(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))
 
+    base_model.trainable = False
+
     model = Sequential()
 
     for layer in base_model.layers:
@@ -146,6 +148,8 @@ if __name__ == '__main__':
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
     callbacks_list = [checkpoint, tensorboard_callback]
+
+    model.summary()
 
     history = model.fit(train_generator,
                         steps_per_epoch=901,
