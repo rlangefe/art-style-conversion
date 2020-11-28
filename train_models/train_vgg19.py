@@ -109,7 +109,9 @@ if __name__ == '__main__':
 
     model.add(Dense(10, activation="softmax"))
 
-    model.compile(optimizer=Adam(learning_rate=0.001), loss=losses.CategoricalCrossentropy())
+    model.compile(optimizer=Adam(learning_rate=0.001),
+                    loss=losses.CategoricalCrossentropy(),
+                    metrics=['accuracy'])
 
     model.summary()
 
