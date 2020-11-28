@@ -154,6 +154,8 @@ if __name__ == '__main__':
                         validation_steps=150,
                         callbacks=callbacks_list)
 
+    model.save(base_dir + 'models/' + curr + '/classifier-full.h5')
+
     plot_history(history)
     plt.savefig('graph_' + curr + '_loss.png')
 
