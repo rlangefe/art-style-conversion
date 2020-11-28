@@ -28,7 +28,7 @@ from tensorflow.keras.regularizers import l1
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 
-from tensorflow.keras.applications import ResNet50V2
+from tensorflow.keras.applications import InceptionResNetV2
 
 target_size = (128, 128)
 import argparse
@@ -96,7 +96,7 @@ if __name__ == '__main__':
             shuffle=True,
             class_mode='categorical')
 
-    base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))
+    base_model = InceptionResNetV2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))
 
     base_model.trainable = False
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     model.summary()
 
-    curr = 'resnet50v2-classifier'
+    curr = 'inceptionresnetv2-classifier'
 
     history = model.fit(train_generator,
                         steps_per_epoch=901,
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     set_trainable = False
     for layer in base_model.layers:
-        if layer.name == 'conv5_block3_preact_bn':
+        if layer.name == 'conv2d_164':
             set_trainable = True
         if set_trainable:
             layer.trainable = True

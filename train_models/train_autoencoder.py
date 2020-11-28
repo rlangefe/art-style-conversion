@@ -21,14 +21,14 @@ from tensorflow.keras import layers, models, optimizers, Input, losses
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers, Model, Input
-from tensorflow.keras.layers import Conv2D, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D, Reshape
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D, Reshape, BatchNormalization, LeakyReLU
 from tensorflow.keras.optimizers import Adam
 from tensorflow import keras
 from tensorflow.keras.regularizers import l1
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 
-target_size = (64, 64)
+target_size = (32, 32)
 import argparse
 
 def random_crop(image):
@@ -52,38 +52,35 @@ class Autoencoder(Model):
     super(Autoencoder, self).__init__()
     self.latent_dim = latent_dim   
     self.encoder = tf.keras.Sequential([
-        tf.keras.layers.GaussianNoise(stddev=0.01, input_shape=(target_size[0], target_size[1], 3)),
-        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same'),
+        Conv2D(64, kernel_size=(5,5), padding='same', input_shape=(target_size[0], target_size[1], 3)),
+        LeakyReLU(),
         MaxPooling2D((2,2)),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
+        BatchNormalization(),
+        Conv2D(32, kernel_size=(3,3), padding='same'),
+        LeakyReLU(),
         MaxPooling2D((2,2)),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
-        MaxPooling2D((2,2)),
-        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same'),
-        MaxPooling2D((2,2)),
+        BatchNormalization(),
+        Conv2D(16, kernel_size=(3,3), padding='same'),
+        LeakyReLU(),
         Flatten(),
-        layers.Dense(encoding_dim, activation="sigmoid")
+        BatchNormalization(),
+        layers.Dense(encoding_dim)
     ])
     self.decoder = tf.keras.Sequential([
         layers.Dense(encoding_dim, activation="relu", input_shape = (encoding_dim,)),
-        Reshape((4, 4, 8)),
-        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(8, kernel_size=(3,3), activation='relu', padding='same'),
+        Reshape((8, 8, 16)),
+        Conv2DTranspose(16, kernel_size=(3,3), padding='same'),
+        LeakyReLU(),
         UpSampling2D((2,2)),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
+        BatchNormalization(),
+        Conv2DTranspose(32, kernel_size=(3,3), padding='same'),
+        LeakyReLU(),
         UpSampling2D((2,2)),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(16, kernel_size=(3,3), activation='relu', padding='same'),
-        UpSampling2D((2,2)),
-        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same'),
-        Conv2D(32, kernel_size=(3,3), activation='relu', padding='same'),
-        UpSampling2D((2,2)),
-        Conv2D(3, kernel_size=(3,3), activation='sigmoid', padding='same')
+        BatchNormalization(),
+        Conv2DTranspose(64, kernel_size=(5,5), padding='same'),
+        LeakyReLU(),
+        BatchNormalization(),
+        Conv2DTranspose(3, kernel_size=(3,3), activation='sigmoid', padding='same')
     ])
 
   def call(self, x):
@@ -101,10 +98,6 @@ if __name__ == '__main__':
     print('Data Generator')
     train_datagen = ImageDataGenerator(
         rescale=1./255,
-        rotation_range=20,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        zoom_range=0.1,
         horizontal_flip=True,
         vertical_flip=True,
         fill_mode='nearest',
@@ -143,10 +136,13 @@ if __name__ == '__main__':
     input_img = Input(shape=(target_size[0],target_size[1],3))
     latent_dim = 64
     #encoding_dim = 2 * 2 * 512
-    encoding_dim = 4 * 4 * 8
+    encoding_dim = 8 * 8 * 16
 
     autoencoder = Autoencoder(encoding_dim)
-    autoencoder.compile(optimizer=Adam(learning_rate=0.0001), loss=losses.MeanSquaredError())
+    autoencoder.compile(optimizer=Adam(learning_rate=0.001), loss=losses.MeanSquaredError())
+
+    autoencoder.encoder.summary()
+    autoencoder.decoder.summary()
 
     curr = 'autoencoder'
 
