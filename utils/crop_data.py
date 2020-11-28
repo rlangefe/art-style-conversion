@@ -17,12 +17,21 @@ if __name__ == '__main__':
 
     args = parse.parse_args()
     tf.random.set_seed(args.seed)
-    target_size = (64, 64)
+    target_size = (128, 128)
     base_dir = args.base
     target_dir = args.output
     crops = args.crops
 
-    artist_list = []
+    artist_list = ['Amedeo_Modigliani', 
+                    'Claude_Monet', 
+                    'Vincent_van_Gogh', 
+                    'Pablo_Picasso',
+                    'Francisco_Goya',
+                    'Alfred_Sisley',
+                    'Marc_Chagall',
+                    'Diego_Velazquez',
+                    'Jan_van_Eyck',
+                    'Paul_Gauguin']
 
     image_num = 1
 

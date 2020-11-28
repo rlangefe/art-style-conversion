@@ -30,7 +30,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 
 from tensorflow.keras.applications.vgg19 import VGG19
 
-target_size = (64, 64)
+target_size = (128, 128)
 import argparse
 
 def plot_history(history):
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     model.add(Dense(512, activation='relu'))
 
-    model.add(Dense(51, activation="softmax"))
+    model.add(Dense(10, activation="softmax"))
 
     model.compile(optimizer=Adam(learning_rate=0.001), loss=losses.CategoricalCrossentropy())
 
@@ -116,10 +116,10 @@ if __name__ == '__main__':
     curr = 'vgg19-classifier'
 
     history = model.fit(train_generator,
-                        steps_per_epoch=5466/2,
+                        steps_per_epoch=901,
                         epochs=15,
                         validation_data=validation_generator,
-                        validation_steps=914/2)
+                        validation_steps=150)
 
     base_model.trainable = True
 
@@ -146,10 +146,10 @@ if __name__ == '__main__':
     callbacks_list = [checkpoint, tensorboard_callback]
 
     history = model.fit(train_generator,
-                        steps_per_epoch=5466/2,
+                        steps_per_epoch=901,
                         epochs=15,
                         validation_data=validation_generator,
-                        validation_steps=914/2,
+                        validation_steps=150,
                         callbacks=callbacks_list)
 
     plot_history(history)
