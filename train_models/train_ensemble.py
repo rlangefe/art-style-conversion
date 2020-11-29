@@ -21,13 +21,16 @@ from tensorflow.keras import layers, models, optimizers, Input, losses
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers, Model, Input
-from tensorflow.keras.layers import Conv2D, Conv2DTranspose, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D, Reshape, BatchNormalization, LeakyReLU
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, Flatten, Dense, MaxPooling2D, Dropout, GaussianNoise, AveragePooling2D, UpSampling2D, Reshape, BatchNormalization, Concatenate
 from tensorflow.keras.optimizers import Adam
 from tensorflow import keras
 from tensorflow.keras.regularizers import l1
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 
+from tensorflow.keras.applications import DenseNet169
+from tensorflow.keras.applications.vgg19 import VGG19
+from tensorflow.keras.applications import InceptionResNetV2
 from tensorflow.keras.applications import ResNet50V2
 
 target_size = (128, 128)
@@ -96,33 +99,69 @@ if __name__ == '__main__':
             shuffle=True,
             class_mode='categorical')
 
-    base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))
+    input_layer = Input(shape=(target_size[0], target_size[1], 3))
 
-    base_model.trainable = False
+    base_model_densenet = DenseNet169(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
+    base_model_vgg19 = VGG19(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
+    base_model_inception = InceptionResNetV2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
+    base_model_resnet = ResNet50V2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
 
-    for layer in base_model.layers:
+    base_model_densenet.trainable = False
+    for layer in base_model_densenet.layers:
         if isinstance(layer, BatchNormalization):
             layer.trainable = True
         else:
             layer.trainable = False
-
-    base_model.summary()
+    base_model_densenet.summary()
+    
+    base_model_vgg19.trainable = False
+    for layer in base_model_vgg19.layers:
+        if isinstance(layer, BatchNormalization):
+            layer.trainable = True
+        else:
+            layer.trainable = False
+    base_model_vgg19.summary()
+    
+    base_model_inception.trainable = False
+    for layer in base_model_inception.layers:
+        if isinstance(layer, BatchNormalization):
+            layer.trainable = True
+        else:
+            layer.trainable = False
+    base_model_inception.summary()
+    
+    base_model_resnet.trainable = False
+    for layer in base_model_resnet.layers:
+        if isinstance(layer, BatchNormalization):
+            layer.trainable = True
+        else:
+            layer.trainable = False
+    base_model_resnet.summary()
 
     model = Sequential()
 
-    model.add(base_model)
+    #model.add(input_layer)
+
+    #model.add(base_model_densenet)
+    #model.add(base_model_vgg19)
+    #model.add(base_model_inception)
+    #model.add(base_model_resnet)
     
+    model.add(Concatenate(axis=1)([base_model_densenet, base_model_vgg19, base_model_inception, base_model_resnet]))
+
     model.add(Flatten())
 
     model.add(Dense(10, activation="softmax"))
-
+    
     model.compile(optimizer=Adam(learning_rate=0.001),
                     loss=losses.CategoricalCrossentropy(),
                     metrics=['accuracy'])
 
     model.summary()
 
-    curr = 'resnet50v2-classifier'
+    exit(0)
+
+    curr = 'ensemble-classifier'
 
     history = model.fit(train_generator,
                         steps_per_epoch=901,
@@ -130,11 +169,48 @@ if __name__ == '__main__':
                         validation_data=validation_generator,
                         validation_steps=150)
 
-    base_model.trainable = True
+    # DenseNet
+    base_model_densenet.trainable = True
 
     set_trainable = False
-    for layer in base_model.layers:
+    for layer in base_model_densenet.layers:
+        if layer.name == 'conv5_block32_0_bn':
+            set_trainable = True
+        if set_trainable:
+            layer.trainable = True
+        else:
+            layer.trainable = False
+
+    # Inception
+    base_model_inception.trainable = True
+
+    set_trainable = False
+    for layer in base_model_inception.layers:
+        if layer.name == 'conv2d_164':
+            set_trainable = True
+        if set_trainable:
+            layer.trainable = True
+        else:
+            layer.trainable = False
+
+    # ResNet
+    base_model_resnet.trainable = True
+
+    set_trainable = False
+    for layer in base_model_resnet.layers:
         if layer.name == 'conv5_block3_preact_bn':
+            set_trainable = True
+        if set_trainable:
+            layer.trainable = True
+        else:
+            layer.trainable = False
+
+    # VGG19
+    base_model_vgg19.trainable = True
+
+    set_trainable = False
+    for layer in base_model_vgg19.layers:
+        if layer.name == 'block5_conv1':
             set_trainable = True
         if set_trainable:
             layer.trainable = True

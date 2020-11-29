@@ -100,6 +100,12 @@ if __name__ == '__main__':
 
     base_model.trainable = False
 
+    for layer in base_model.layers:
+        if isinstance(layer, BatchNormalization):
+            layer.trainable = True
+        else:
+            layer.trainable = False
+
     base_model.summary()
 
     model = Sequential()
