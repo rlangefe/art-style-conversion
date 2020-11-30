@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import itertools
 import io
+import pandas as pd
 
 import matplotlib
 matplotlib.use('Agg')
@@ -133,6 +134,14 @@ if __name__ == '__main__':
             shuffle=True,
             class_mode='categorical')
 
+    print('Train Generator (No Shuffle)')
+    train_generator_pred = test_datagen.flow_from_directory(
+            train_dir,
+            target_size=target_size,
+            color_mode='rgb',
+            batch_size=128,
+            class_mode='categorical')
+
     print('Validation Generator')
     validation_generator = test_datagen.flow_from_directory(
             validation_dir,
@@ -171,7 +180,7 @@ if __name__ == '__main__':
 
     model.compile(optimizer=Adam(learning_rate=0.001),
                     loss=losses.CategoricalCrossentropy(),
-                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_k_categorical_accuracy', dtype=None)])
+                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_3_categorical_accuracy', dtype=None)])
 
     model.summary()
 
@@ -272,5 +281,66 @@ if __name__ == '__main__':
 
     plot_history(history)
     plt.savefig(base_dir + 'models/' + model_arch + '/' + curr + '/graph_' + curr + '_loss.png')
+
+    print('Saving Predictions')
+
+    class_keys = inv_map = dict(zip(train_generator.class_indices.values(), train_generator.class_indices.keys()))
+
+    # Training predictions
+    print('Saving Training')
+    curr_generator = train_generator_pred
+
+    curr_pred = model.predict(curr_generator)
+
+    pred_dict = {}
+
+    pred_dict['Filename'] = curr_generator.filepaths
+    pred_dict['Class'] = curr_generator.classes
+    pred_dict['Prediction'] = np.argmax(curr_pred, axis=-1)
+
+    for n,c in class_keys.items():
+        pred_dict[c] = curr_pred[:,n]
+
+    prediction_record_curr = pd.DataFrame(pred_dict)
+
+    prediction_record_curr.to_csv(base_dir + 'models/' + model_arch + '/' + curr + '/train_pred.csv')
+
+    # Validation predictions
+    print('Saving Validation')
+    curr_generator = validation_generator
+
+    curr_pred = model.predict(curr_generator)
+
+    pred_dict = {}
+
+    pred_dict['Filename'] = curr_generator.filepaths
+    pred_dict['Class'] = curr_generator.classes
+    pred_dict['Prediction'] = np.argmax(curr_pred, axis=-1)
+
+    for n,c in class_keys.items():
+        pred_dict[c] = curr_pred[:,n]
+
+    prediction_record_curr = pd.DataFrame(pred_dict)
+
+    prediction_record_curr.to_csv(base_dir + 'models/' + model_arch + '/' + curr + '/val_pred.csv')
+
+    # Test predictions
+    print('Saving Test')
+    curr_generator = test_generator
+
+    curr_pred = model.predict(curr_generator)
+
+    pred_dict = {}
+
+    pred_dict['Filename'] = curr_generator.filepaths
+    pred_dict['Class'] = curr_generator.classes
+    pred_dict['Prediction'] = np.argmax(curr_pred, axis=-1)
+
+    for n,c in class_keys.items():
+        pred_dict[c] = curr_pred[:,n]
+
+    prediction_record_curr = pd.DataFrame(pred_dict)
+
+    prediction_record_curr.to_csv(base_dir + 'models/' + model_arch + '/' + curr + '/test_pred.csv')
 
     exit(0)

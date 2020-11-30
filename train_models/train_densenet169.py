@@ -250,7 +250,7 @@ if __name__ == '__main__':
 
     history = model.fit(train_generator,
                         steps_per_epoch=901,
-                        epochs=0,#15,
+                        epochs=15,
                         validation_data=validation_generator,
                         validation_steps=150,
                         class_weight=class_weights,
@@ -270,11 +270,11 @@ if __name__ == '__main__':
     model.summary()
 
     history = model.fit(train_generator,
-                        steps_per_epoch=10,#901,
-                        epochs=1,#30,
-                        initial_epoch=0,#15,
+                        steps_per_epoch=901,
+                        epochs=30,
+                        initial_epoch=15,
                         validation_data=validation_generator,
-                        validation_steps=10,#150,
+                        validation_steps=150,
                         class_weight=class_weights,
                         callbacks=callbacks_list)
 

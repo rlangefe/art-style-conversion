@@ -11,7 +11,9 @@ from sklearn import model_selection, preprocessing, linear_model, naive_bayes, m
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn import decomposition, ensemble
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.ensemble import RandomForestClassifier
+
 
 import tensorflow as tf
 
@@ -36,25 +38,6 @@ from tensorflow.keras.applications import ResNet50V2
 target_size = (128, 128)
 import argparse
 
-def plot_history(history):
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-    x = range(1, len(acc) + 1)
-
-    plt.figure(figsize=(12, 5))
-    plt.subplot(1, 2, 1)
-    plt.plot(x, acc, 'b', label='Training acc')
-    plt.plot(x, val_acc, 'r', label='Validation acc')
-    plt.title('Training and validation accuracy')
-    plt.legend()
-    plt.subplot(1, 2, 2)
-    plt.plot(x, loss, 'b', label='Training loss')
-    plt.plot(x, val_loss, 'r', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.legend()
-
 if __name__ == '__main__':
     base_dir = '/home/csuser/art-style-conversion/'
 
@@ -62,186 +45,97 @@ if __name__ == '__main__':
     validation_dir = base_dir + 'cropped_data/val'
     test_dir = base_dir + 'cropped_data/test'
 
-    print('Data Generator')
-    train_datagen = ImageDataGenerator(
-        rescale=1./255,
-        horizontal_flip=True,
-        vertical_flip=True,
-        fill_mode='nearest')
+    parse = argparse.ArgumentParser()
+    parse.add_argument("-a","--arch",dest="arch",help="Model Architecture Type",default='base_models')
 
-    # Note that the validation data should not be augmented!
-    test_datagen = ImageDataGenerator(rescale=1./255)
+    args = parse.parse_args()
+    model_arch = args.arch
 
-    print('Train Generator')
-    train_generator = train_datagen.flow_from_directory(
-            train_dir,
-            target_size=target_size,
-            color_mode='rgb',
-            batch_size=128,
-            shuffle=True,
-            class_mode='categorical')
+    # Training data load
+    curr_file = 'train_pred.csv'
 
-    print('Validation Generator')
-    validation_generator = test_datagen.flow_from_directory(
-            validation_dir,
-            target_size=target_size,
-            color_mode='rgb',
-            batch_size=128,
-            shuffle=True,
-            class_mode='categorical')
+    train_data = pd.read_csv('models/' + model_arch + '/base-classifier/' + curr_file).set_index('Filename')
 
-    print('Test Generator')
-    test_generator = test_datagen.flow_from_directory(
-            test_dir,
-            target_size=target_size,
-            color_mode='rgb',
-            batch_size=128,
-            shuffle=True,
-            class_mode='categorical')
+    df = pd.read_csv('models/' + model_arch + '/densenet169-classifier/' + curr_file).set_index('Filename')
+    train_data = train_data.join(df, lsuffix='_base', rsuffix='_densenet169').set_index('Filename')
 
-    input_layer = Input(shape=(target_size[0], target_size[1], 3))
+    df = pd.read_csv('models/' + model_arch + '/inceptionresnetv2-classifier/' + curr_file).set_index('Filename')
+    train_data = train_data.join(df, rsuffix='_inceptionresnetv2').set_index('Filename')
 
-    base_model_densenet = DenseNet169(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
-    base_model_vgg19 = VGG19(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
-    base_model_inception = InceptionResNetV2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
-    base_model_resnet = ResNet50V2(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))(input_layer)
+    df = pd.read_csv('models/' + model_arch + '/resnet50v2-classifier/' + curr_file).set_index('Filename')
+    train_data = train_data.join(df, rsuffix='_resnet50v2').set_index('Filename')
 
-    base_model_densenet.trainable = False
-    for layer in base_model_densenet.layers:
-        if isinstance(layer, BatchNormalization):
-            layer.trainable = True
-        else:
-            layer.trainable = False
-    base_model_densenet.summary()
-    
-    base_model_vgg19.trainable = False
-    for layer in base_model_vgg19.layers:
-        if isinstance(layer, BatchNormalization):
-            layer.trainable = True
-        else:
-            layer.trainable = False
-    base_model_vgg19.summary()
-    
-    base_model_inception.trainable = False
-    for layer in base_model_inception.layers:
-        if isinstance(layer, BatchNormalization):
-            layer.trainable = True
-        else:
-            layer.trainable = False
-    base_model_inception.summary()
-    
-    base_model_resnet.trainable = False
-    for layer in base_model_resnet.layers:
-        if isinstance(layer, BatchNormalization):
-            layer.trainable = True
-        else:
-            layer.trainable = False
-    base_model_resnet.summary()
+    df = pd.read_csv('models/' + model_arch + '/vgg19-classifier/' + curr_file).set_index('Filename')
+    train_data = train_data.join(df, rsuffix='_vgg19').set_index('Filename')
 
-    model = Sequential()
+    # Validation data load
+    curr_file = 'val_pred.csv'
 
-    #model.add(input_layer)
+    val_data = pd.read_csv('models/' + model_arch + '/base-classifier/' + curr_file).set_index('Filename')
 
-    #model.add(base_model_densenet)
-    #model.add(base_model_vgg19)
-    #model.add(base_model_inception)
-    #model.add(base_model_resnet)
-    
-    model.add(Concatenate(axis=1)([base_model_densenet, base_model_vgg19, base_model_inception, base_model_resnet]))
+    df = pd.read_csv('models/' + model_arch + '/densenet169-classifier/' + curr_file).set_index('Filename')
+    val_data = val_data.join(df, lsuffix='_base', rsuffix='_densenet169').set_index('Filename')
 
-    model.add(Flatten())
+    df = pd.read_csv('models/' + model_arch + '/inceptionresnetv2-classifier/' + curr_file).set_index('Filename')
+    val_data = val_data.join(df, rsuffix='_inceptionresnetv2').set_index('Filename')
 
-    model.add(Dense(10, activation="softmax"))
-    
-    model.compile(optimizer=Adam(learning_rate=0.001),
-                    loss=losses.CategoricalCrossentropy(),
-                    metrics=['accuracy'])
+    df = pd.read_csv('models/' + model_arch + '/resnet50v2-classifier/' + curr_file).set_index('Filename')
+    val_data = val_data.join(df, rsuffix='_resnet50v2').set_index('Filename')
 
-    model.summary()
+    df = pd.read_csv('models/' + model_arch + '/vgg19-classifier/' + curr_file).set_index('Filename')
+    val_data = val_data.join(df, rsuffix='_vgg19').set_index('Filename')
 
-    exit(0)
+
+    # Test data load
+    curr_file = 'test_pred.csv'
+
+    test_data = pd.read_csv('models/' + model_arch + '/base-classifier/' + curr_file).set_index('Filename')
+
+    df = pd.read_csv('models/' + model_arch + '/densenet169-classifier/' + curr_file).set_index('Filename')
+    test_data = test_data.join(df, lsuffix='_base', rsuffix='_densenet169').set_index('Filename')
+
+    df = pd.read_csv('models/' + model_arch + '/inceptionresnetv2-classifier/' + curr_file).set_index('Filename')
+    test_data = test_data.join(df, rsuffix='_inceptionresnetv2').set_index('Filename')
+
+    df = pd.read_csv('models/' + model_arch + '/resnet50v2-classifier/' + curr_file).set_index('Filename')
+    test_data = test_data.join(df, rsuffix='_resnet50v2').set_index('Filename')
+
+    df = pd.read_csv('models/' + model_arch + '/vgg19-classifier/' + curr_file).set_index('Filename')
+    test_data = test_data.join(df, rsuffix='_vgg19').set_index('Filename')
 
     curr = 'ensemble-classifier'
 
-    history = model.fit(train_generator,
-                        steps_per_epoch=901,
-                        epochs=15,
-                        validation_data=validation_generator,
-                        validation_steps=150)
+    training_data = pd.concat([train_data, val_data], ignore_index=True, axis=0)
 
-    # DenseNet
-    base_model_densenet.trainable = True
+    training_data.head()
 
-    set_trainable = False
-    for layer in base_model_densenet.layers:
-        if layer.name == 'conv5_block32_0_bn':
-            set_trainable = True
-        if set_trainable:
-            layer.trainable = True
-        else:
-            layer.trainable = False
+    print('\n\n')
 
-    # Inception
-    base_model_inception.trainable = True
+    for a in training_data.columns:
+        print(a)
 
-    set_trainable = False
-    for layer in base_model_inception.layers:
-        if layer.name == 'conv2d_164':
-            set_trainable = True
-        if set_trainable:
-            layer.trainable = True
-        else:
-            layer.trainable = False
+    exit(0)
 
-    # ResNet
-    base_model_resnet.trainable = True
+    cv = KFold(n_splits=10, random_state=42, shuffle=True)
 
-    set_trainable = False
-    for layer in base_model_resnet.layers:
-        if layer.name == 'conv5_block3_preact_bn':
-            set_trainable = True
-        if set_trainable:
-            layer.trainable = True
-        else:
-            layer.trainable = False
+    scores = {}
 
-    # VGG19
-    base_model_vgg19.trainable = True
+    tree_number = list(range(1, 201, step=20))
 
-    set_trainable = False
-    for layer in base_model_vgg19.layers:
-        if layer.name == 'block5_conv1':
-            set_trainable = True
-        if set_trainable:
-            layer.trainable = True
-        else:
-            layer.trainable = False
+    xcols = []
+    ycols = []
 
-    filepath = base_dir + 'models/' + curr + '/' + curr + '-{epoch:02d}.h5'
-    checkpoint = ModelCheckpoint(filepath, 
-                                save_weights_only=False,
-                                monitor='val_loss',
-                                mode='min',
-                                save_best_only=True,
-                                verbose=1)
+    X = training_data[xcols]
+    y = training_data[ycols]
 
-    logdir = base_dir + "logs/scalars/" + curr + "-" + datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+    for n in tree_number:
+        scores[n] = []
 
-    callbacks_list = [checkpoint, tensorboard_callback]
+        clf = RandomForestClassifier(n_estimators=n, max_depth=4, random_state=42)
 
-    model.summary()
-
-    history = model.fit(train_generator,
-                        steps_per_epoch=901,
-                        epochs=15,
-                        validation_data=validation_generator,
-                        validation_steps=150,
-                        callbacks=callbacks_list)
-
-    model.save(base_dir + 'models/' + curr + '/classifier-full.h5')
-
-    plot_history(history)
-    plt.savefig('graph_' + curr + '_loss.png')
+        for train_idx, val_idx in cv.split(training_data):
+            X_train, X_val, y_train, y_val = X[train_idx], X[val_idx], y[train_idx], y[val_idx]
+            clf.fit(X_train, y_train)
+            scores[n].append(clf.score(X_val, y_val))
 
     exit(0)

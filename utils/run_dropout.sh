@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TYPE_DIR=base_models
+TYPE_DIR=dropout
 
 python3 train_models/$TYPE_DIR/train_densenet169.py -a $TYPE_DIR |& tee models/$TYPE_DIR/densenet169-classifier/output.o
 
