@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn import decomposition, ensemble
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.utils import class_weight
 import sklearn
 
 import tensorflow as tf
@@ -80,9 +81,9 @@ def plot_confusion_matrix(cm, class_names):
     color = "white" if cm[i, j] > threshold else "black"
     plt.text(j, i, labels[i, j], horizontalalignment="center", color=color)
 
-  plt.tight_layout()
   plt.ylabel('True label')
   plt.xlabel('Predicted label')
+  plt.tight_layout()
   return figure
 
 def plot_to_image(figure):
@@ -103,7 +104,11 @@ def plot_to_image(figure):
 
 if __name__ == '__main__':
     base_dir = '/home/csuser/art-style-conversion/'
-    model_arch = 'base_models'
+    parse = argparse.ArgumentParser()
+    parse.add_argument("-a","--arch",dest="arch",help="Model Architecture Type",default='base_models')
+
+    args = parse.parse_args()
+    model_arch = args.arch
 
     train_dir = base_dir + 'cropped_data/train'
     validation_dir = base_dir + 'cropped_data/val'
@@ -127,6 +132,8 @@ if __name__ == '__main__':
             batch_size=128,
             shuffle=True,
             class_mode='categorical')
+
+    
 
     print('Validation Generator')
     validation_generator = test_datagen.flow_from_directory(
@@ -160,7 +167,7 @@ if __name__ == '__main__':
 
     model.compile(optimizer=Adam(learning_rate=0.001),
                     loss=losses.CategoricalCrossentropy(),
-                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_k_categorical_accuracy', dtype=None)])
+                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_3_categorical_accuracy', dtype=None)])
 
     model.summary()
 
@@ -174,7 +181,8 @@ if __name__ == '__main__':
                                 save_best_only=True,
                                 verbose=1)
 
-    logdir = base_dir + "logs/" + model_arch + "/" + curr + "/" + curr + "-" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    curr_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+    logdir = base_dir + "logs/" + model_arch + "/" + curr + "/" + curr + "-" + curr_time
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
     val_file_writer_cm = tf.summary.create_file_writer(logdir + '/cm-val')
@@ -220,11 +228,19 @@ if __name__ == '__main__':
 
     callbacks_list = [checkpoint, tensorboard_callback, cm_callback_val, cm_callback_test]
 
+    class_weights = class_weight.compute_class_weight(
+               'balanced',
+                np.unique(train_generator.classes), 
+                train_generator.classes)
+
+    class_weights = dict(enumerate(class_weights))
+
     history = model.fit(train_generator,
                         steps_per_epoch=901,
                         epochs=15,
                         validation_data=validation_generator,
                         validation_steps=150,
+                        class_weight=class_weights,
                         callbacks=callbacks_list)
 
     base_model.trainable = True
@@ -246,6 +262,7 @@ if __name__ == '__main__':
                         initial_epoch=15,
                         validation_data=validation_generator,
                         validation_steps=150,
+                        class_weight=class_weights,
                         callbacks=callbacks_list)
 
     model.save(base_dir + 'models/' + model_arch + '/' + curr + '/classifier-full.h5')

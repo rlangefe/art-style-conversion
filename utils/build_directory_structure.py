@@ -16,7 +16,6 @@ if __name__ == '__main__':
         os.makedirs(models_dir)
 
     model_type_list = ['densenet169-classifier',
-                        'ensemble-classifier',
                         'inceptionresnetv2-classifier',
                         'resnet50v2-classifier',
                         'vgg19-classifier',

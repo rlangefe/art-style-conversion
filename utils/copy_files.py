@@ -18,7 +18,8 @@ if __name__ == '__main__':
                     'train_resnet50v2.py',
                     'train_vgg19.py',
                     'train_inceptionresnetv2.py',
-                    'train_traditionalCNN.py']
+                    'train_traditionalCNN.py',
+                    'train_traditionalCNN_withoutDropout.py']
 
     model_dir = os.path.join(base_dir, 'train_models')
 

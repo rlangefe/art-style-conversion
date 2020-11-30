@@ -1,11 +1,13 @@
 #!/bin/bash
 
-python3 train_models/base_models/train_densenet169.py | tee models/base_models/densenet169-classifier/output.o
+TYPE_DIR = base_models
 
-python3 train_models/base_models/train_inceptionresnetv2.py | tee models/base_models/inceptionresnetv2-classifier/output.o
+python3 train_models/$TYPE_DIR/train_densenet169.py -a base_models |& tee models/$TYPE_DIR/densenet169-classifier/output.o
 
-python3 train_models/base_models/train_resnet50v2.py | tee models/base_models/resnet50v2-classifier/output.o
+python3 train_models/$TYPE_DIR/train_inceptionresnetv2.py -a base_models |& tee models/$TYPE_DIR/inceptionresnetv2-classifier/output.o
 
-python3 train_models/base_models/train_traditionalCNN_withoutDropout.py | tee models/base_models/base-classifier/output.o
+python3 train_models/$TYPE_DIR/train_resnet50v2.py -a base_models |& tee models/$TYPE_DIR/resnet50v2-classifier/output.o
 
-python3 train_models/base_models/train_vgg19.py | tee models/base_models/vgg19-classifier/output.o
+python3 train_models/$TYPE_DIR/train_traditionalCNN_withoutDropout.py -a base_models |& tee models/$TYPE_DIR/base-classifier/output.o
+
+python3 train_models/$TYPE_DIR/train_vgg19.py -a base_models |& tee models/$TYPE_DIR/vgg19-classifier/output.o

@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import itertools
 import io
+import pandas as pd
 
 import matplotlib
 matplotlib.use('Agg')
@@ -14,6 +15,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn import decomposition, ensemble
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.utils import class_weight
 import sklearn
 
 import tensorflow as tf
@@ -79,9 +81,9 @@ def plot_confusion_matrix(cm, class_names):
     color = "white" if cm[i, j] > threshold else "black"
     plt.text(j, i, labels[i, j], horizontalalignment="center", color=color)
 
-  plt.tight_layout()
   plt.ylabel('True label')
   plt.xlabel('Predicted label')
+  plt.tight_layout()
   return figure
 
 def plot_to_image(figure):
@@ -102,8 +104,12 @@ def plot_to_image(figure):
 
 if __name__ == '__main__':
     base_dir = '/home/csuser/art-style-conversion/'
-    model_arch = ''
+    parse = argparse.ArgumentParser()
+    parse.add_argument("-a","--arch",dest="arch",help="Model Architecture Type",default='base_models')
 
+    args = parse.parse_args()
+    model_arch = args.arch
+    
     train_dir = base_dir + 'cropped_data/train'
     validation_dir = base_dir + 'cropped_data/val'
     test_dir = base_dir + 'cropped_data/test'
@@ -125,6 +131,14 @@ if __name__ == '__main__':
             color_mode='rgb',
             batch_size=128,
             shuffle=True,
+            class_mode='categorical')
+
+    print('Train Generator (No Shuffle)')
+    train_generator_pred = test_datagen.flow_from_directory(
+            train_dir,
+            target_size=target_size,
+            color_mode='rgb',
+            batch_size=128,
             class_mode='categorical')
 
     print('Validation Generator')
@@ -166,7 +180,7 @@ if __name__ == '__main__':
     model.add(Dense(10, activation="softmax"))
     model.compile(optimizer=Adam(learning_rate=0.001),
                     loss=losses.CategoricalCrossentropy(),
-                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_k_categorical_accuracy', dtype=None)])
+                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_3_categorical_accuracy', dtype=None)])
     
 
     model.summary()
@@ -227,16 +241,85 @@ if __name__ == '__main__':
 
     callbacks_list = [checkpoint, tensorboard_callback, cm_callback_val, cm_callback_test]
 
+    class_weights = class_weight.compute_class_weight(
+               'balanced',
+                np.unique(train_generator.classes), 
+                train_generator.classes)
+
+    class_weights = dict(enumerate(class_weights))
+
     history = model.fit(train_generator,
                         steps_per_epoch=901,
-                        epochs=6,
+                        epochs=30,
                         validation_data=validation_generator,
                         validation_steps=150,
+                        class_weight=class_weights,
                         callbacks=callbacks_list)
 
     model.save(base_dir + 'models/' + model_arch + '/' + curr + '/classifier-full.h5')
 
     plot_history(history)
     plt.savefig(base_dir + 'models/' + model_arch + '/' + curr + '/graph_' + curr + '_loss.png')
+
+    print('Saving Predictions')
+
+    class_keys = inv_map = dict(zip(train_generator.class_indices.values(), train_generator.class_indices.keys()))
+
+    # Training predictions
+    print('Saving Training')
+    curr_generator = train_generator_pred
+
+    curr_pred = model.predict(curr_generator)
+
+    pred_dict = {}
+
+    pred_dict['Filename'] = curr_generator.filepaths
+    pred_dict['Class'] = curr_generator.classes
+    pred_dict['Prediction'] = np.argmax(curr_pred, axis=-1)
+
+    for n,c in class_keys.items():
+        pred_dict[c] = curr_pred[:,n]
+
+    prediction_record_curr = pd.DataFrame(pred_dict)
+
+    prediction_record_curr.to_csv(base_dir + 'models/' + model_arch + '/' + curr + '/train_pred.csv')
+
+    # Validation predictions
+    print('Saving Validation')
+    curr_generator = validation_generator
+
+    curr_pred = model.predict(curr_generator)
+
+    pred_dict = {}
+
+    pred_dict['Filename'] = curr_generator.filepaths
+    pred_dict['Class'] = curr_generator.classes
+    pred_dict['Prediction'] = np.argmax(curr_pred, axis=-1)
+
+    for n,c in class_keys.items():
+        pred_dict[c] = curr_pred[:,n]
+
+    prediction_record_curr = pd.DataFrame(pred_dict)
+
+    prediction_record_curr.to_csv(base_dir + 'models/' + model_arch + '/' + curr + '/val_pred.csv')
+
+    # Test predictions
+    print('Saving Test')
+    curr_generator = test_generator
+
+    curr_pred = model.predict(curr_generator)
+
+    pred_dict = {}
+
+    pred_dict['Filename'] = curr_generator.filepaths
+    pred_dict['Class'] = curr_generator.classes
+    pred_dict['Prediction'] = np.argmax(curr_pred, axis=-1)
+
+    for n,c in class_keys.items():
+        pred_dict[c] = curr_pred[:,n]
+
+    prediction_record_curr = pd.DataFrame(pred_dict)
+
+    prediction_record_curr.to_csv(base_dir + 'models/' + model_arch + '/' + curr + '/test_pred.csv')
 
     exit(0)
