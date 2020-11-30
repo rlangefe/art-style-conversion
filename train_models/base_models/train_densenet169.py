@@ -31,6 +31,7 @@ from tensorflow.keras.regularizers import l1
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 
+from tensorflow.keras.applications import DenseNet169
 
 target_size = (128, 128)
 import argparse
@@ -102,7 +103,7 @@ def plot_to_image(figure):
 
 if __name__ == '__main__':
     base_dir = '/home/csuser/art-style-conversion/'
-    model_arch = ''
+    model_arch = 'base_models'
 
     train_dir = base_dir + 'cropped_data/train'
     validation_dir = base_dir + 'cropped_data/val'
@@ -143,33 +144,27 @@ if __name__ == '__main__':
             batch_size=128,
             class_mode='categorical')
 
+    base_model = DenseNet169(weights='imagenet', include_top=False, input_shape=(target_size[0], target_size[1], 3))
+
+    base_model.trainable = False
+
+    base_model.summary()
 
     model = Sequential()
 
+    model.add(base_model)
     
-    model.add(Conv2D(filters = 16, kernel_size = (5,5), padding = 'Same', activation = 'relu', input_shape=(target_size[0], target_size[1], 3)))
-    model.add(Conv2D(filters = 16, kernel_size = (5,5), padding = 'Same', activation = 'relu'))
-    model.add(MaxPooling2D(pool_size = (2,2)))
-
-    model.add(Conv2D(filters = 32, kernel_size = (3,3), padding = 'Same', activation = 'relu'))
-    model.add(Conv2D(filters = 32, kernel_size = (3,3), padding = 'Same', activation = 'relu'))
-    model.add(MaxPooling2D(pool_size = (2,2), strides=(2,2)))
-
-    model.add(Conv2D(filters = 64, kernel_size = (3,3), padding = 'Same', activation = 'relu'))
-    model.add(Conv2D(filters = 64, kernel_size = (3,3), padding = 'Same', activation = 'relu'))
-    model.add(MaxPooling2D(pool_size = (2,2), strides=(2,2)))
-
     model.add(Flatten())
+
     model.add(Dense(10, activation="softmax"))
 
     model.compile(optimizer=Adam(learning_rate=0.001),
                     loss=losses.CategoricalCrossentropy(),
                     metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name='top_k_categorical_accuracy', dtype=None)])
-    
 
     model.summary()
-    
-    curr = 'base-classifier'
+
+    curr = 'densenet169-classifier'
 
     filepath = base_dir + 'models/' + model_arch + '/' + curr + '/' + curr + '-{epoch:02d}.h5'
     checkpoint = ModelCheckpoint(filepath, 
@@ -227,7 +222,28 @@ if __name__ == '__main__':
 
     history = model.fit(train_generator,
                         steps_per_epoch=901,
-                        epochs=6,
+                        epochs=15,
+                        validation_data=validation_generator,
+                        validation_steps=150,
+                        callbacks=callbacks_list)
+
+    base_model.trainable = True
+
+    set_trainable = False
+    for layer in base_model.layers:
+        if layer.name == 'conv5_block32_0_bn':
+            set_trainable = True
+        if set_trainable:
+            layer.trainable = True
+        else:
+            layer.trainable = False
+
+    model.summary()
+
+    history = model.fit(train_generator,
+                        steps_per_epoch=901,
+                        epochs=30,
+                        initial_epoch=15,
                         validation_data=validation_generator,
                         validation_steps=150,
                         callbacks=callbacks_list)

@@ -56,7 +56,7 @@ def plot_history(history):
     plt.legend()
 
 if __name__ == '__main__':
-    base_dir = '/deac/classes/csc391/langrc18/art-style-conversion/'
+    base_dir = '/home/csuser/art-style-conversion/'
 
     train_dir = base_dir + 'cropped_data/train'
     validation_dir = base_dir + 'cropped_data/val'

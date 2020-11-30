@@ -5,8 +5,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 if __name__ == '__main__':
-    base_dir = '/deac/classes/csc391/langrc18/art-style-conversion/images/images'
-    target_dir = '/deac/classes/csc391/langrc18/art-style-conversion/data'
+    base_dir = 'images/images'
+    target_dir = 'data'
 
     #copyfile(src, dst)
 

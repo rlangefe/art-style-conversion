@@ -102,7 +102,7 @@ def plot_to_image(figure):
 
 if __name__ == '__main__':
     base_dir = '/home/csuser/art-style-conversion/'
-    model_arch = ''
+    model_arch = 'base_models'
 
     train_dir = base_dir + 'cropped_data/train'
     validation_dir = base_dir + 'cropped_data/val'
@@ -227,7 +227,7 @@ if __name__ == '__main__':
 
     history = model.fit(train_generator,
                         steps_per_epoch=901,
-                        epochs=6,
+                        epochs=30,
                         validation_data=validation_generator,
                         validation_steps=150,
                         callbacks=callbacks_list)
