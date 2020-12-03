@@ -157,7 +157,7 @@ if __name__ == '__main__':
             batch_size=128,
             class_mode='categorical')
 
-
+#toned model 
     model = Sequential()
 
     
