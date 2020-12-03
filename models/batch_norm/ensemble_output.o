@@ -7,39 +7,39 @@ Concatenate Data
 Alpha and L1 Ratio Tuning
 	Elastic Net: Alpha=0.001 and L1 Ratio=0.0
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.19575352635486265
+		Mean Accuracy: 0.15616926503340756
 
 	Elastic Net: Alpha=0.001 and L1 Ratio=0.2
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.2626577579806978
+		Mean Accuracy: 0.23816629547141796
 
 	Elastic Net: Alpha=0.001 and L1 Ratio=0.4
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.27743132887899036
+		Mean Accuracy: 0.2643281365998515
 
 	Elastic Net: Alpha=0.001 and L1 Ratio=0.6000000000000001
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.28560504825538235
+		Mean Accuracy: 0.2784558277654046
 
 	Elastic Net: Alpha=0.001 and L1 Ratio=0.8
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.28908685968819603
+		Mean Accuracy: 0.2816332590942836
 
 	Elastic Net: Alpha=0.003 and L1 Ratio=0.0
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.2654120267260579
+		Mean Accuracy: 0.21847067557535263
 
 	Elastic Net: Alpha=0.003 and L1 Ratio=0.2
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.30069042316258354
+		Mean Accuracy: 0.298181143281366
 
 	Elastic Net: Alpha=0.003 and L1 Ratio=0.4
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.3031403118040089
+		Mean Accuracy: 0.30325909428359316
 
 	Elastic Net: Alpha=0.003 and L1 Ratio=0.6000000000000001
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.303637713437268
+		Mean Accuracy: 0.303630289532294
 
 	Elastic Net: Alpha=0.003 and L1 Ratio=0.8
 		Running 5-Fold Cross-Validation
@@ -47,11 +47,11 @@ Alpha and L1 Ratio Tuning
 
 	Elastic Net: Alpha=0.005 and L1 Ratio=0.0
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.28156644394951746
+		Mean Accuracy: 0.2470007423904974
 
 	Elastic Net: Alpha=0.005 and L1 Ratio=0.2
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.30328136599851524
+		Mean Accuracy: 0.303170007423905
 
 	Elastic Net: Alpha=0.005 and L1 Ratio=0.4
 		Running 5-Fold Cross-Validation
@@ -67,11 +67,11 @@ Alpha and L1 Ratio Tuning
 
 	Elastic Net: Alpha=0.007 and L1 Ratio=0.0
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.29117297698589456
+		Mean Accuracy: 0.26201930215293245
 
 	Elastic Net: Alpha=0.007 and L1 Ratio=0.2
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.303630289532294
+		Mean Accuracy: 0.30362286562732
 
 	Elastic Net: Alpha=0.007 and L1 Ratio=0.4
 		Running 5-Fold Cross-Validation
@@ -87,7 +87,7 @@ Alpha and L1 Ratio Tuning
 
 	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.0
 		Running 5-Fold Cross-Validation
-		Mean Accuracy: 0.2950779510022271
+		Mean Accuracy: 0.2721826280623608
 
 	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.2
 		Running 5-Fold Cross-Validation
@@ -106,21 +106,13 @@ Alpha and L1 Ratio Tuning
 		Mean Accuracy: 0.303637713437268
 
 Plotting
-Traceback (most recent call last):
-  File "train_models/train_ensemble.py", line 208, in <module>
-    sns.lineplot(x=score_x, y=score_y, hue=score_hue)
-  File "/usr/local/lib/python3.6/dist-packages/seaborn/relational.py", line 1078, in lineplot
-    sort=sort, err_style=err_style, err_kws=err_kws, legend=legend,
-  File "/usr/local/lib/python3.6/dist-packages/seaborn/relational.py", line 670, in __init__
-    self.parse_hue(plot_data["hue"], palette, hue_order, hue_norm)
-  File "/usr/local/lib/python3.6/dist-packages/seaborn/relational.py", line 375, in parse_hue
-    data, order, palette, norm
-  File "/usr/local/lib/python3.6/dist-packages/seaborn/relational.py", line 260, in numeric_to_palette
-    norm(np.asarray(data.dropna()))
-  File "/usr/local/lib/python3.6/dist-packages/matplotlib/colors.py", line 942, in __call__
-    self.autoscale_None(result)
-  File "/usr/local/lib/python3.6/dist-packages/matplotlib/colors.py", line 988, in autoscale_None
-    self.vmin = A.min()
-  File "/home/csuser/.local/lib/python3.6/site-packages/numpy/ma/core.py", line 5673, in min
-    axis=axis, out=out, **kwargs).view(type(self))
-AttributeError: 'str' object has no attribute 'view'
+
+Best Parameters
+         Best Alpha: 0.003
+      Best L1 Ratio: 0.8
+Best Model Accuracy: 0.303637713437268
+
+Fitting Best Model
+
+Train Accuracy: 0.303637713437268
+ Test Accuracy: 0.29949238578680204
