@@ -1,0 +1,31 @@
+Running dropout inceptionresnetv2-classifier
+Running for test
+
+Chi-Squared: X^2=877.6203100661912 with P-Value of 5.35427783540177e-134 for 81 degrees of freedom
+Expected Contingency Table
+                   Alfred_Sisley  ...  Vincent_van_Gogh
+Alfred_Sisley           2.649746  ...          4.842640
+Amedeo_Modigliani       1.913706  ...          3.497462
+Claude_Monet            0.736041  ...          1.345178
+Diego_Velazquez         1.324873  ...          2.421320
+Francisco_Goya          2.944162  ...          5.380711
+Jan_van_Eyck            0.883249  ...          1.614213
+Marc_Chagall            2.355330  ...          4.304569
+Pablo_Picasso           4.416244  ...          8.071066
+Paul_Gauguin            3.091371  ...          5.649746
+Vincent_van_Gogh        8.685279  ...         15.873096
+
+[10 rows x 10 columns]
+
+
+Calculating ROC AUC
+	Area Under ROC Curve for Class Alfred_Sisley (want >0.5): 0.9081315952824333
+	Area Under ROC Curve for Class Amedeo_Modigliani (want >0.5): 0.9483695652173912
+	Area Under ROC Curve for Class Claude_Monet (want >0.5): 0.7947916666666668
+	Area Under ROC Curve for Class Diego_Velazquez (want >0.5): 0.9364657210401891
+	Area Under ROC Curve for Class Francisco_Goya (want >0.5): 0.8387005649717514
+	Area Under ROC Curve for Class Jan_van_Eyck (want >0.5): 0.9816753926701571
+	Area Under ROC Curve for Class Marc_Chagall (want >0.5): 0.8979627071823204
+	Area Under ROC Curve for Class Pablo_Picasso (want >0.5): 0.6166666666666667
+	Area Under ROC Curve for Class Paul_Gauguin (want >0.5): 0.7828733766233766
+	Area Under ROC Curve for Class Vincent_van_Gogh (want >0.5): 0.8644681896339966

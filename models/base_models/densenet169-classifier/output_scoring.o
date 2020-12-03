@@ -1,0 +1,31 @@
+Running base_models densenet169-classifier
+Running for test
+
+Chi-Squared: X^2=1186.497201531945 with P-Value of 6.589724366431651e-196 for 81 degrees of freedom
+Expected Contingency Table
+                   Alfred_Sisley  ...  Vincent_van_Gogh
+Alfred_Sisley           2.101523  ...          4.934010
+Amedeo_Modigliani       1.517766  ...          3.563452
+Claude_Monet            0.583756  ...          1.370558
+Diego_Velazquez         1.050761  ...          2.467005
+Francisco_Goya          2.335025  ...          5.482234
+Jan_van_Eyck            0.700508  ...          1.644670
+Marc_Chagall            1.868020  ...          4.385787
+Pablo_Picasso           3.502538  ...          8.223350
+Paul_Gauguin            2.451777  ...          5.756345
+Vincent_van_Gogh        6.888325  ...         16.172589
+
+[10 rows x 10 columns]
+
+
+Calculating ROC AUC
+	Area Under ROC Curve for Class Alfred_Sisley (want >0.5): 0.894320297951583
+	Area Under ROC Curve for Class Amedeo_Modigliani (want >0.5): 0.9945652173913043
+	Area Under ROC Curve for Class Claude_Monet (want >0.5): 0.7921875
+	Area Under ROC Curve for Class Diego_Velazquez (want >0.5): 0.9946808510638299
+	Area Under ROC Curve for Class Francisco_Goya (want >0.5): 0.8943502824858757
+	Area Under ROC Curve for Class Jan_van_Eyck (want >0.5): 0.9166666666666667
+	Area Under ROC Curve for Class Marc_Chagall (want >0.5): 0.926450276243094
+	Area Under ROC Curve for Class Pablo_Picasso (want >0.5): 0.8773453093812376
+	Area Under ROC Curve for Class Paul_Gauguin (want >0.5): 0.8639069264069265
+	Area Under ROC Curve for Class Vincent_van_Gogh (want >0.5): 0.9213338246131172

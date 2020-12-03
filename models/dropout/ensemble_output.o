@@ -1,0 +1,118 @@
+Load Training Data
+Load Validation Data
+Load Test Data
+
+Concatenate Data
+
+Alpha and L1 Ratio Tuning
+	Elastic Net: Alpha=0.001 and L1 Ratio=0.0
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.15616184112843357
+
+	Elastic Net: Alpha=0.001 and L1 Ratio=0.2
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.24308834446919078
+
+	Elastic Net: Alpha=0.001 and L1 Ratio=0.4
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.27335560504825535
+
+	Elastic Net: Alpha=0.001 and L1 Ratio=0.6000000000000001
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.2850853749072012
+
+	Elastic Net: Alpha=0.001 and L1 Ratio=0.8
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.2916629547141797
+
+	Elastic Net: Alpha=0.003 and L1 Ratio=0.0
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.2119524870081663
+
+	Elastic Net: Alpha=0.003 and L1 Ratio=0.2
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.2998812175204158
+
+	Elastic Net: Alpha=0.003 and L1 Ratio=0.4
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.3033704528582034
+
+	Elastic Net: Alpha=0.003 and L1 Ratio=0.6000000000000001
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.003 and L1 Ratio=0.8
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.005 and L1 Ratio=0.0
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.245924276169265
+
+	Elastic Net: Alpha=0.005 and L1 Ratio=0.2
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.30334075723830733
+
+	Elastic Net: Alpha=0.005 and L1 Ratio=0.4
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.005 and L1 Ratio=0.6000000000000001
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.005 and L1 Ratio=0.8
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.007 and L1 Ratio=0.0
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.2599554565701559
+
+	Elastic Net: Alpha=0.007 and L1 Ratio=0.2
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.30360801781737196
+
+	Elastic Net: Alpha=0.007 and L1 Ratio=0.4
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.007 and L1 Ratio=0.6000000000000001
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.007 and L1 Ratio=0.8
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.0
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.2687676317743133
+
+	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.2
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.4
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.6000000000000001
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+	Elastic Net: Alpha=0.009000000000000001 and L1 Ratio=0.8
+		Running 5-Fold Cross-Validation
+		Mean Accuracy: 0.303637713437268
+
+Plotting
+
+Best Parameters
+         Best Alpha: 0.003
+      Best L1 Ratio: 0.6000000000000001
+Best Model Accuracy: 0.303637713437268
+
+Fitting Best Model
+
+Train Accuracy: 0.303637713437268
+ Test Accuracy: 0.29949238578680204
