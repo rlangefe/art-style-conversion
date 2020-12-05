@@ -1,0 +1,2 @@
+usage: train_ensemble.py [-h] [-a ARCH]
+train_ensemble.py: error: argument -a/--arch: expected one argument
